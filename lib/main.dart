@@ -114,40 +114,14 @@ class Platform extends PositionComponent
   }
 
   @override
-  bool onDragStart(int pointerId, DragStartInfo info) {
-    dragX = info.eventPosition.game.x;
-    return true;
-  }
-
-  @override
   bool onDragUpdate(int pointerId, DragUpdateInfo info) {
     if (gameRef.isPaused()) {
       return false;
     }
-    final newX = info.eventPosition.game.x;
-    this.x += newX - (dragX ?? 0);
-    this.dragX = newX;
+    this.x += info.delta.game.x;
     if (gameRef.ball.isReset) {
       gameRef.ball.launch();
     }
-    return true;
-  }
-
-  @override
-  bool onDragCancel(int pointerId) {
-    if (gameRef.isPaused()) {
-      return false;
-    }
-    this.dragX = null;
-    return true;
-  }
-
-  @override
-  bool onDragEnd(int pointerId, DragEndInfo info) {
-    if (gameRef.isPaused()) {
-      return false;
-    }
-    this.dragX = null;
     return true;
   }
 }
