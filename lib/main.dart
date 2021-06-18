@@ -20,7 +20,7 @@ void main() {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('Perdeu otario!', style: _whiteText),
+                Text('Perdeu, campeao!', style: _whiteText),
                 TextButton(
                   onPressed: game.restart,
                   child: Text('Restart', style: _whiteText),
@@ -35,7 +35,7 @@ void main() {
 }
 
 class Ball extends PositionComponent with HasGameRef<BreakoutGame> {
-  static const radius = 20.0;
+  static const radius = 10.0;
   static const speed = 500.0;
   static final _paint = BasicPalette.white.paint();
 
@@ -56,7 +56,8 @@ class Ball extends PositionComponent with HasGameRef<BreakoutGame> {
   void update(double dt) {
     super.update(dt);
 
-    position += velocity * dt;
+    final ds = velocity * dt;
+    position += ds;
     if (position.x < 0) {
       position.x = 0;
       velocity.multiply(Vector2(-1, 1));
@@ -71,6 +72,24 @@ class Ball extends PositionComponent with HasGameRef<BreakoutGame> {
       gameRef.camera.shake(amount: 0.15);
     } else if (position.y > gameRef.size.y) {
       gameRef.onLose();
+    } else {
+      final previousRect = (position - ds) & size;
+      final effectiveCollisionBounds = toRect().expandToInclude(previousRect);
+      final intersects =
+          gameRef.platform.toRect().intersect(effectiveCollisionBounds);
+      if (!intersects.isEmpty) {
+        position.y = gameRef.platform.position.y - Ball.radius;
+        velocity.multiply(Vector2(1, -1));
+        velocity += gameRef.platform.averageVelocity / 10;
+      } else {
+        final boxes = gameRef.components.whereType<Crate>();
+        for (final box in boxes) {
+          final collision = box.toRect().intersect(effectiveCollisionBounds);
+          if (!collision.isEmpty) {
+            box.remove();
+          }
+        }
+      }
     }
   }
 
@@ -88,12 +107,15 @@ class Ball extends PositionComponent with HasGameRef<BreakoutGame> {
 
 class Platform extends PositionComponent
     with HasGameRef<BreakoutGame>, Draggable {
-  static final _paint = BasicPalette.blue.paint();
+  static final _paint = BasicPalette.white.paint();
   double? dragX;
+
+  late Vector2 previousPosition = position;
+  Vector2 averageVelocity = Vector2.zero();
 
   Platform() {
     anchor = Anchor.topCenter;
-    size = Vector2(240, 20);
+    size = Vector2(100, 10);
   }
 
   @override
@@ -106,6 +128,15 @@ class Platform extends PositionComponent
   void onGameResize(Vector2 gameSize) {
     super.onGameResize(gameSize);
     reset();
+  }
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    if (dt != 0) {
+      this.averageVelocity = (position - this.previousPosition) / dt;
+      this.previousPosition = position.clone();
+    }
   }
 
   void reset() {
@@ -126,7 +157,21 @@ class Platform extends PositionComponent
   }
 }
 
-class Crate extends PositionComponent {}
+class Crate extends PositionComponent {
+  static final _paint = BasicPalette.white.paint();
+  static final Vector2 crateSize = Vector2(100, 26);
+
+  Crate(Vector2 position) {
+    this.position = position;
+    size = crateSize;
+  }
+
+  @override
+  void render(Canvas c) {
+    super.render(c);
+    c.drawRect(size.toRect(), _paint);
+  }
+}
 
 class BreakoutGame extends BaseGame
     with HasDraggableComponents, MultiTouchTapDetector {
@@ -136,9 +181,31 @@ class BreakoutGame extends BaseGame
   @override
   Future<void> onLoad() async {
     camera.shakeIntensity = 20;
+    setup();
+  }
+
+  void setup() {
     add(platform = Platform());
     add(ball = Ball());
+    createCrates();
     ball.reset();
+  }
+
+  void createCrates() {
+    final grid = Vector2(5, 4);
+    final margin = Vector2(10, 10);
+
+    final unitWidth = Crate.crateSize + margin;
+    final totalDimensions = grid.clone()..multiply(unitWidth);
+    final start = (size - totalDimensions) / 2;
+
+    for (var i = 0; i < grid.x; i++) {
+      for (var j = 0; j < grid.y; j++) {
+        final p =
+            start + (Vector2Extension.fromInts(i, j)..multiply(unitWidth));
+        add(Crate(p));
+      }
+    }
   }
 
   @override
@@ -156,8 +223,8 @@ class BreakoutGame extends BaseGame
   }
 
   void onLose() async {
-    platform.reset();
-    ball.reset();
+    clear();
+    setup();
     camera.shake(amount: 2);
     overlays.add('gameOver');
   }
