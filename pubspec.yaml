@@ -17,3 +17,8 @@ dev_dependencies:
 
 flutter:
   uses-material-design: false
+
+  fonts:
+    - family: press-start-2p
+      fonts:
+        - asset: assets/press-start-2p.ttf

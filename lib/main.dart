@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flame/extensions.dart';
@@ -5,8 +7,9 @@ import 'package:flame/gestures.dart';
 import 'package:flame/palette.dart';
 import 'package:flutter/material.dart' hide Draggable;
 
-const _whiteText = TextStyle(
-  fontSize: 48,
+final _whiteText = TextStyle(
+  fontFamily: 'press-start-2p',
+  fontSize: 20,
   color: Colors.white,
 );
 
@@ -16,28 +19,106 @@ void main() {
       game: BreakoutGame(),
       overlayBuilderMap: {
         'gameOver': (_, game) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text('Perdeu, campeao!', style: _whiteText),
-                TextButton(
-                  onPressed: game.restart,
-                  child: Text('Restart', style: _whiteText),
-                ),
-              ],
-            ),
-          );
+          return LoserMenuOverlay(game: game);
         },
       },
     ),
   );
 }
 
+class LoserMenuOverlay extends StatelessWidget {
+  const LoserMenuOverlay({
+    Key? key,
+    required this.game,
+  }) : super(key: key);
+
+  final BreakoutGame game;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
+        height: 200,
+        width: 400,
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: Colors.white,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Perdeu, campeao!',
+              style: _whiteText,
+            ),
+            Padding(
+              padding: EdgeInsets.all(16.0),
+              child: OutlinedButton(
+                onPressed: game.restart,
+                child: Text(
+                  'Restart',
+                  style: _whiteText,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    ;
+  }
+}
+
+final kRandom = math.Random();
+
+class ShadowBall extends PositionComponent {
+  static const radius = 10.0;
+  static final _paintRed = BasicPalette.red.paint()
+    ..blendMode = BlendMode.lighten;
+  static final _paintGreen = BasicPalette.green.paint()
+    ..blendMode = BlendMode.lighten;
+  static final _paintBlue = BasicPalette.blue.paint()
+    ..blendMode = BlendMode.lighten;
+
+  ShadowBall() {
+    this.anchor = Anchor.center;
+  }
+
+  @override
+  void render(Canvas canvas) {
+    super.render(canvas);
+    // red
+    final displacementRed = position;
+    canvas.drawCircle(displacementRed.toOffset(), radius, _paintRed);
+
+    // green
+    final displacementGreen = displacementRed + position;
+    canvas.drawCircle(displacementGreen.toOffset(), radius * 0.95, _paintGreen);
+
+    // blue
+    final displacementBlue = displacementGreen + position;
+    canvas.drawCircle(displacementBlue.toOffset(), radius * 0.75, _paintBlue);
+  }
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+
+    final reverseVelocity = -(parent as Ball).velocity / (Ball.speed * 0.3);
+    position = reverseVelocity;
+  }
+}
+
 class Ball extends PositionComponent with HasGameRef<BreakoutGame> {
   static const radius = 10.0;
   static const speed = 500.0;
   static final _paint = BasicPalette.white.paint();
+
+  @override
+  Future<void> onLoad() async {
+    addChild(ShadowBall());
+  }
 
   bool isReset = false;
   Vector2 velocity = Vector2.zero();
@@ -110,6 +191,48 @@ class Ball extends PositionComponent with HasGameRef<BreakoutGame> {
   }
 }
 
+class PlatformShadow extends PositionComponent {
+
+  static final _paintRed = BasicPalette.red.paint()
+    ..blendMode = BlendMode.lighten;
+  static final _paintGreen = BasicPalette.green.paint()
+    ..blendMode = BlendMode.lighten;
+  static final _paintBlue = BasicPalette.blue.paint()
+    ..blendMode = BlendMode.lighten;
+
+
+  double timer = 0.0;
+
+  PlatformShadow(Vector2 size) {
+    anchor = Anchor.topLeft;
+    this.size = size;
+  }
+
+  @override
+  void render(Canvas canvas) {
+    super.render(canvas);
+    canvas.drawRect(size.toRect(), _paintRed);
+    canvas.drawRect(position & size, _paintGreen);
+    canvas.drawRect((position * 2) & size, _paintBlue);
+  }
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    final parentVelocity = (parent as Platform).averageVelocity;
+
+    if (parentVelocity != Vector2.zero()) {
+      final reverseVelocity = -parentVelocity / 100;
+      position = reverseVelocity;
+      timer = 300.0;
+    } else if (timer != 0.0) {
+      timer = (timer - dt).clamp(0.0, timer);
+    } else {
+      position = Vector2.zero();
+    }
+  }
+}
+
 class Platform extends PositionComponent
     with HasGameRef<BreakoutGame>, Draggable {
   static final _paint = BasicPalette.white.paint();
@@ -120,7 +243,12 @@ class Platform extends PositionComponent
 
   Platform() {
     anchor = Anchor.topCenter;
-    size = Vector2(100, 10);
+    size = Vector2(100, 20);
+  }
+
+  @override
+  Future<void>? onLoad() {
+    addChild(PlatformShadow(size));
   }
 
   @override
@@ -146,7 +274,7 @@ class Platform extends PositionComponent
 
   void reset() {
     x = gameRef.size.x / 2;
-    y = gameRef.size.y - 160;
+    y = gameRef.size.y - 100;
   }
 
   @override
@@ -163,10 +291,16 @@ class Platform extends PositionComponent
 }
 
 class Crate extends PositionComponent {
-  static final _paint = BasicPalette.white.paint();
+  static final _paint1 = Paint()..color = Color(0xFFFFC100);
+  static final _paint2 = Paint()..color = Color(0xFFFF5300);
+  static final _paint3 = Paint()..color = Color(0xFFFF2600);
+  static final _paint4 = Paint()..color = Color(0xFFE22349);
+  static final _paints = [_paint1, _paint2, _paint3, _paint4];
   static final Vector2 crateSize = Vector2(100, 26);
 
-  Crate(Vector2 position) {
+  final int row;
+
+  Crate(Vector2 position, this.row) {
     this.position = position;
     size = crateSize;
   }
@@ -174,7 +308,7 @@ class Crate extends PositionComponent {
   @override
   void render(Canvas c) {
     super.render(c);
-    c.drawRect(size.toRect(), _paint);
+    c.drawRect(size.toRect(), _paints[row]);
   }
 }
 
@@ -185,7 +319,7 @@ class BreakoutGame extends BaseGame
 
   @override
   Future<void> onLoad() async {
-    camera.shakeIntensity = 20;
+    camera.shakeIntensity = 5;
     setup();
   }
 
@@ -198,17 +332,17 @@ class BreakoutGame extends BaseGame
 
   void createCrates() {
     final grid = Vector2(5, 4);
-    final margin = Vector2(10, 10);
+    final margin = Vector2(5, 5);
 
     final unitWidth = Crate.crateSize + margin;
     final totalDimensions = grid.clone()..multiply(unitWidth);
-    final start = (size - totalDimensions) / 2;
+    final start = ((size - totalDimensions) / 2)..y = 100.0;
 
     for (var i = 0; i < grid.x; i++) {
       for (var j = 0; j < grid.y; j++) {
         final p =
             start + (Vector2Extension.fromInts(i, j)..multiply(unitWidth));
-        add(Crate(p));
+        add(Crate(p, j));
       }
     }
   }
