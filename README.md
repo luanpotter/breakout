@@ -6,7 +6,7 @@ A very simple implementation of a breakout game, made using Flame.
 
 Run with:
 
-``bash
+```bash
 flutter pub get
 flutter run
 ```
