@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flame/extensions.dart';
@@ -14,6 +12,7 @@ final _overlayText = TextStyle(
 );
 
 final _paintWhite = BasicPalette.white.paint();
+final _paintBorder = BasicPalette.white.paint()..style = PaintingStyle.stroke;
 final _paintRed = BasicPalette.red.paint()..blendMode = BlendMode.lighten;
 final _paintGreen = BasicPalette.green.paint()..blendMode = BlendMode.lighten;
 final _paintBlue = BasicPalette.blue.paint()..blendMode = BlendMode.lighten;
@@ -70,6 +69,18 @@ class LoserMenuOverlay extends StatelessWidget {
       ),
     );
   }
+}
+
+class Bg extends Component with HasGameRef<BreakoutGame> {
+  void render(Canvas c) {
+    c.drawRect(gameRef.size.toRect().deflate(1.0), _paintBorder);
+  }
+
+  @override
+  bool get isHud => true;
+
+  @override
+  int get priority => -1;
 }
 
 class ShadowBall extends PositionComponent {
@@ -311,6 +322,7 @@ class BreakoutGame extends BaseGame
   }
 
   void setup() {
+    add(Bg());
     add(platform = Platform());
     add(ball = Ball());
     createCrates();
