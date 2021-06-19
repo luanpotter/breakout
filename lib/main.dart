@@ -7,11 +7,16 @@ import 'package:flame/gestures.dart';
 import 'package:flame/palette.dart';
 import 'package:flutter/material.dart' hide Draggable;
 
-final _whiteText = TextStyle(
+final _overlayText = TextStyle(
   fontFamily: 'press-start-2p',
   fontSize: 20,
   color: Colors.white,
 );
+
+final _paintWhite = BasicPalette.white.paint();
+final _paintRed = BasicPalette.red.paint()..blendMode = BlendMode.lighten;
+final _paintGreen = BasicPalette.green.paint()..blendMode = BlendMode.lighten;
+final _paintBlue = BasicPalette.blue.paint()..blendMode = BlendMode.lighten;
 
 void main() {
   runApp(
@@ -49,17 +54,15 @@ class LoserMenuOverlay extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Perdeu, campeao!',
-              style: _whiteText,
+              'You lose!!',
+              style: _overlayText,
             ),
-            Padding(
-              padding: EdgeInsets.all(16.0),
-              child: OutlinedButton(
-                onPressed: game.restart,
-                child: Text(
-                  'Restart',
-                  style: _whiteText,
-                ),
+            SizedBox(height: 16.0),
+            OutlinedButton(
+              onPressed: game.restart,
+              child: Text(
+                'Dismiss',
+                style: _overlayText,
               ),
             ),
           ],
@@ -70,16 +73,8 @@ class LoserMenuOverlay extends StatelessWidget {
   }
 }
 
-final kRandom = math.Random();
-
 class ShadowBall extends PositionComponent {
   static const radius = 10.0;
-  static final _paintRed = BasicPalette.red.paint()
-    ..blendMode = BlendMode.lighten;
-  static final _paintGreen = BasicPalette.green.paint()
-    ..blendMode = BlendMode.lighten;
-  static final _paintBlue = BasicPalette.blue.paint()
-    ..blendMode = BlendMode.lighten;
 
   ShadowBall() {
     this.anchor = Anchor.center;
@@ -113,12 +108,6 @@ class ShadowBall extends PositionComponent {
 class Ball extends PositionComponent with HasGameRef<BreakoutGame> {
   static const radius = 10.0;
   static const speed = 500.0;
-  static final _paint = BasicPalette.white.paint();
-
-  @override
-  Future<void> onLoad() async {
-    addChild(ShadowBall());
-  }
 
   bool isReset = false;
   Vector2 velocity = Vector2.zero();
@@ -128,9 +117,14 @@ class Ball extends PositionComponent with HasGameRef<BreakoutGame> {
   }
 
   @override
+  Future<void> onLoad() async {
+    addChild(ShadowBall());
+  }
+
+  @override
   void render(Canvas canvas) {
     super.render(canvas);
-    canvas.drawCircle(Offset.zero, radius, _paint);
+    canvas.drawCircle(Offset.zero, radius, _paintWhite);
   }
 
   @override
@@ -186,21 +180,12 @@ class Ball extends PositionComponent with HasGameRef<BreakoutGame> {
   }
 
   void launch() {
-    velocity = Vector2(1, -1) * Ball.speed;
+    velocity = Vector2(0.75, -1) * Ball.speed;
     isReset = false;
   }
 }
 
 class PlatformShadow extends PositionComponent {
-
-  static final _paintRed = BasicPalette.red.paint()
-    ..blendMode = BlendMode.lighten;
-  static final _paintGreen = BasicPalette.green.paint()
-    ..blendMode = BlendMode.lighten;
-  static final _paintBlue = BasicPalette.blue.paint()
-    ..blendMode = BlendMode.lighten;
-
-
   double timer = 0.0;
 
   PlatformShadow(Vector2 size) {
@@ -291,11 +276,11 @@ class Platform extends PositionComponent
 }
 
 class Crate extends PositionComponent {
-  static final _paint1 = Paint()..color = Color(0xFFFFC100);
-  static final _paint2 = Paint()..color = Color(0xFFFF5300);
-  static final _paint3 = Paint()..color = Color(0xFFFF2600);
-  static final _paint4 = Paint()..color = Color(0xFFE22349);
-  static final _paints = [_paint1, _paint2, _paint3, _paint4];
+  static final _paintRow1 = Paint()..color = Color(0xFFE22349);
+  static final _paintRow2 = Paint()..color = Color(0xFFFF2600);
+  static final _paintRow3 = Paint()..color = Color(0xFFFF5300);
+  static final _paintrow4 = Paint()..color = Color(0xFFFFC100);
+  static final _paints = [_paintRow1, _paintRow2, _paintRow3, _paintrow4];
   static final Vector2 crateSize = Vector2(100, 26);
 
   final int row;
@@ -308,7 +293,7 @@ class Crate extends PositionComponent {
   @override
   void render(Canvas c) {
     super.render(c);
-    c.drawRect(size.toRect(), _paints[row]);
+    c.drawRect(size.toRect(), _paints[row ~/ 2]);
   }
 }
 
@@ -320,6 +305,9 @@ class BreakoutGame extends BaseGame
   @override
   Future<void> onLoad() async {
     camera.shakeIntensity = 5;
+
+    viewport = FixedResolutionViewport(Vector2(640, 1280));
+
     setup();
   }
 
@@ -331,7 +319,7 @@ class BreakoutGame extends BaseGame
   }
 
   void createCrates() {
-    final grid = Vector2(5, 4);
+    final grid = Vector2(5, 8);
     final margin = Vector2(5, 5);
 
     final unitWidth = Crate.crateSize + margin;
