@@ -153,7 +153,7 @@ class Ball extends PositionComponent with HasGameRef<BreakoutGame> {
 
   @override
   Future<void> onLoad() async {
-    addChild(ShadowBall());
+    addChild(BallShadow());
   }
 
   @override
@@ -242,10 +242,10 @@ class Crate extends PositionComponent {
   }
 }
 
-class ShadowBall extends PositionComponent {
+class BallShadow extends PositionComponent {
   static const radius = 10.0;
 
-  ShadowBall() {
+  BallShadow() {
     this.anchor = Anchor.center;
   }
 
