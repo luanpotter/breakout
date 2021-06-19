@@ -2,6 +2,8 @@
 
 A very simple implementation of a breakout game, made using Flame.
 
+![screenshot](screenshot.png)
+
 Run with:
 
 ``bash
