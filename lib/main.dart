@@ -69,7 +69,6 @@ class LoserMenuOverlay extends StatelessWidget {
         ),
       ),
     );
-    ;
   }
 }
 
