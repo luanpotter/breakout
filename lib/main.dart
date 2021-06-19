@@ -83,9 +83,14 @@ class Ball extends PositionComponent with HasGameRef<BreakoutGame> {
         velocity += gameRef.platform.averageVelocity / 10;
       } else {
         final boxes = gameRef.components.whereType<Crate>();
+        var firstBox = true;
         for (final box in boxes) {
           final collision = box.toRect().intersect(effectiveCollisionBounds);
           if (!collision.isEmpty) {
+            if (firstBox) {
+              velocity.multiply(Vector2(1, -1));
+              firstBox = false;
+            }
             box.remove();
           }
         }
