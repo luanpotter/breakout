@@ -18,57 +18,7 @@ final _paintGreen = BasicPalette.green.paint()..blendMode = BlendMode.lighten;
 final _paintBlue = BasicPalette.blue.paint()..blendMode = BlendMode.lighten;
 
 void main() {
-  runApp(
-    GameWidget<BreakoutGame>(
-      game: BreakoutGame(),
-      overlayBuilderMap: {
-        'gameOver': (_, game) {
-          return LoserMenuOverlay(game: game);
-        },
-      },
-    ),
-  );
-}
-
-class LoserMenuOverlay extends StatelessWidget {
-  const LoserMenuOverlay({
-    Key? key,
-    required this.game,
-  }) : super(key: key);
-
-  final BreakoutGame game;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        height: 200,
-        width: 400,
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: Colors.white,
-          ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'You lose!!',
-              style: _overlayText,
-            ),
-            SizedBox(height: 16.0),
-            OutlinedButton(
-              onPressed: game.restart,
-              child: Text(
-                'Dismiss',
-                style: _overlayText,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  runApp(GameWidget(game: BreakoutGame()));
 }
 
 class Bg extends Component with HasGameRef<BreakoutGame> {
@@ -98,7 +48,7 @@ class Platform extends PositionComponent
 
   @override
   Future<void>? onLoad() {
-    addChild(PlatformShadow(size));
+    //
   }
 
   @override
@@ -129,9 +79,6 @@ class Platform extends PositionComponent
 
   @override
   bool onDragUpdate(int pointerId, DragUpdateInfo info) {
-    if (gameRef.isPaused()) {
-      return false;
-    }
     this.x += info.delta.game.x;
     if (gameRef.ball.isReset) {
       gameRef.ball.launch();
@@ -153,7 +100,7 @@ class Ball extends PositionComponent with HasGameRef<BreakoutGame> {
 
   @override
   Future<void> onLoad() async {
-    addChild(ShadowBall());
+    //
   }
 
   @override
@@ -168,6 +115,7 @@ class Ball extends PositionComponent with HasGameRef<BreakoutGame> {
 
     final ds = velocity * dt;
     position += ds;
+
     if (position.x < 0) {
       position.x = 0;
       velocity.multiply(Vector2(-1, 1));
@@ -242,71 +190,6 @@ class Crate extends PositionComponent {
   }
 }
 
-class ShadowBall extends PositionComponent {
-  static const radius = 10.0;
-
-  ShadowBall() {
-    this.anchor = Anchor.center;
-  }
-
-  @override
-  void render(Canvas canvas) {
-    super.render(canvas);
-    // red
-    final displacementRed = position;
-    canvas.drawCircle(displacementRed.toOffset(), radius, _paintRed);
-
-    // green
-    final displacementGreen = displacementRed + position;
-    canvas.drawCircle(displacementGreen.toOffset(), radius * 0.95, _paintGreen);
-
-    // blue
-    final displacementBlue = displacementGreen + position;
-    canvas.drawCircle(displacementBlue.toOffset(), radius * 0.75, _paintBlue);
-  }
-
-  @override
-  void update(double dt) {
-    super.update(dt);
-
-    final reverseVelocity = -(parent as Ball).velocity / (Ball.speed * 0.3);
-    position = reverseVelocity;
-  }
-}
-
-class PlatformShadow extends PositionComponent {
-  double timer = 0.0;
-
-  PlatformShadow(Vector2 size) {
-    anchor = Anchor.topLeft;
-    this.size = size;
-  }
-
-  @override
-  void render(Canvas canvas) {
-    super.render(canvas);
-    canvas.drawRect(size.toRect(), _paintRed);
-    canvas.drawRect(position & size, _paintGreen);
-    canvas.drawRect((position * 2) & size, _paintBlue);
-  }
-
-  @override
-  void update(double dt) {
-    super.update(dt);
-    final parentVelocity = (parent as Platform).averageVelocity;
-
-    if (parentVelocity != Vector2.zero()) {
-      final reverseVelocity = -parentVelocity / 100;
-      position = reverseVelocity;
-      timer = 300.0;
-    } else if (timer != 0.0) {
-      timer = (timer - dt).clamp(0.0, timer);
-    } else {
-      position = Vector2.zero();
-    }
-  }
-}
-
 class BreakoutGame extends BaseGame with HasDraggableComponents {
   late Platform platform;
   late Ball ball;
@@ -345,17 +228,6 @@ class BreakoutGame extends BaseGame with HasDraggableComponents {
   }
 
   void onLose() {
-    clear();
-    setup();
-    camera.shake(amount: 2);
-    overlays.add('gameOver');
-  }
-
-  void restart() {
-    overlays.remove('gameOver');
-  }
-
-  bool isPaused() {
-    return overlays.isActive('gameOver');
+    //
   }
 }
