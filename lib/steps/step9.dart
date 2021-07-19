@@ -85,7 +85,6 @@ class Bg extends Component with HasGameRef<BreakoutGame> {
 
 class Platform extends PositionComponent
     with HasGameRef<BreakoutGame>, Draggable {
-  static final _paint = BasicPalette.white.paint();
   double? dragX;
 
   late Vector2 previousPosition = position;
@@ -104,13 +103,7 @@ class Platform extends PositionComponent
   @override
   void render(Canvas canvas) {
     super.render(canvas);
-    canvas.drawRect(size.toRect(), _paint);
-  }
-
-  @override
-  void onGameResize(Vector2 gameSize) {
-    super.onGameResize(gameSize);
-    reset();
+    canvas.drawRect(size.toRect(), _paintWhite);
   }
 
   @override
@@ -321,6 +314,7 @@ class BreakoutGame extends BaseGame with HasDraggableComponents {
   void setup() {
     add(Bg());
     add(platform = Platform());
+    platform.reset();
     add(ball = Ball());
     ball.reset();
 
