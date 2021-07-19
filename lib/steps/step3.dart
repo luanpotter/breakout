@@ -35,19 +35,12 @@ class Bg extends Component with HasGameRef<BreakoutGame> {
 
 class Platform extends PositionComponent
     with HasGameRef<BreakoutGame>, Draggable {
-  double? dragX;
-
-  late Vector2 previousPosition = position;
-  Vector2 averageVelocity = Vector2.zero();
-
-  Platform() {
-    anchor = Anchor.topCenter;
-    size = Vector2(100, 20);
-  }
-
   @override
   Future<void>? onLoad() {
-    //
+    anchor = Anchor.topCenter;
+    x = gameRef.size.x / 2;
+    y = gameRef.size.y - 100;
+    size = Vector2(100, 20);
   }
 
   @override
@@ -55,6 +48,9 @@ class Platform extends PositionComponent
     super.render(canvas);
     canvas.drawRect(size.toRect(), _paintWhite);
   }
+
+  late Vector2 previousPosition = position;
+  Vector2 averageVelocity = Vector2.zero();
 
   @override
   void update(double dt) {
@@ -65,10 +61,7 @@ class Platform extends PositionComponent
     }
   }
 
-  void reset() {
-    x = gameRef.size.x / 2;
-    y = gameRef.size.y - 100;
-  }
+  double? dragX;
 
   @override
   bool onDragUpdate(int pointerId, DragUpdateInfo info) {
@@ -88,6 +81,5 @@ class BreakoutGame extends BaseGame with HasDraggableComponents {
 
     add(Bg());
     add(platform = Platform());
-    platform.reset();
   }
 }
