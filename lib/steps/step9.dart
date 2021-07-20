@@ -5,12 +5,6 @@ import 'package:flame/gestures.dart';
 import 'package:flame/palette.dart';
 import 'package:flutter/material.dart' hide Draggable;
 
-final _overlayText = TextStyle(
-  fontFamily: 'press-start-2p',
-  fontSize: 20,
-  color: Colors.white,
-);
-
 final _paintWhite = BasicPalette.white.paint();
 final _paintBorder = BasicPalette.white.paint()..style = PaintingStyle.stroke;
 final _paintRed = BasicPalette.red.paint()..blendMode = BlendMode.lighten;
@@ -29,6 +23,12 @@ void main() {
     ),
   );
 }
+
+final _overlayText = TextStyle(
+  fontFamily: 'press-start-2p',
+  fontSize: 20,
+  color: Colors.white,
+);
 
 class LoserMenuOverlay extends StatelessWidget {
   const LoserMenuOverlay({

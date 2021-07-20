@@ -351,12 +351,7 @@
 			"    position = reverseVelocity;",
 			"  }",
 			"}",
-		],
-	},
-	"step9.snippet2": {
-		"scope": "dart",
-		"prefix": "s92",
-		"body": [
+			"",
 			"class PlatformShadow extends PositionComponent {",
 			"  double timer = 0.0;",
 			"",
