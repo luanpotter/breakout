@@ -1,7 +1,5 @@
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
-import 'package:flame/extensions.dart';
-import 'package:flame/gestures.dart';
 import 'package:flame/palette.dart';
 import 'package:flutter/material.dart' hide Draggable;
 
@@ -12,13 +10,17 @@ final _paintGreen = BasicPalette.green.paint()..blendMode = BlendMode.lighten;
 final _paintBlue = BasicPalette.blue.paint()..blendMode = BlendMode.lighten;
 
 void main() {
-  runApp(GameWidget(game: BreakoutGame()));
+  runApp(
+    GameWidget<BreakoutGame>(
+      game: BreakoutGame(),
+    ),
+  );
 }
 
-class BreakoutGame extends BaseGame with HasDraggableComponents {
+class BreakoutGame extends FlameGame with HasDraggables {
   @override
   Future<void> onLoad() async {
-    camera.shakeIntensity = 5;
-    viewport = FixedResolutionViewport(Vector2(640, 1280));
+    super.onLoad();
+    camera.viewport = FixedResolutionViewport(Vector2(640, 1280));
   }
 }
