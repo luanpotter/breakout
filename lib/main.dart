@@ -1,7 +1,7 @@
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flame/extensions.dart';
-import 'package:flame/gestures.dart';
+import 'package:flame/input.dart';
 import 'package:flame/palette.dart';
 import 'package:flutter/material.dart' hide Draggable;
 
@@ -77,7 +77,7 @@ class Bg extends Component with HasGameRef<BreakoutGame> {
   }
 
   @override
-  bool get isHud => true;
+  PositionType get positionType => PositionType.viewport;
 
   @override
   int get priority => -1;
@@ -86,13 +86,14 @@ class Bg extends Component with HasGameRef<BreakoutGame> {
 class Platform extends PositionComponent
     with HasGameRef<BreakoutGame>, Draggable {
   @override
-  Future<void>? onLoad() {
+  Future<void>? onLoad() async {
+    super.onLoad();
     anchor = Anchor.topCenter;
     x = gameRef.size.x / 2;
     y = gameRef.size.y - 100;
     size = Vector2(100, 20);
 
-    addChild(PlatformShadow(size));
+    add(PlatformShadow(size));
   }
 
   @override
@@ -134,12 +135,13 @@ class Ball extends PositionComponent with HasGameRef<BreakoutGame> {
 
   @override
   Future<void> onLoad() async {
+    super.onLoad();
     anchor = Anchor.center;
     position = gameRef.platform.position - Vector2(0, Ball.radius);
     velocity = Vector2.zero();
     isReset = true;
 
-    addChild(BallShadow());
+    add(BallShadow());
   }
 
   @override
@@ -158,28 +160,28 @@ class Ball extends PositionComponent with HasGameRef<BreakoutGame> {
     if (position.x < 0) {
       position.x = 0;
       velocity.multiply(Vector2(-1, 1));
-      gameRef.camera.shake(amount: 0.15);
+      gameRef.camera.shake(duration: 0.15, intensity: 5);
     } else if (position.x > gameRef.size.x) {
       position.x = gameRef.size.x;
       velocity.multiply(Vector2(-1, 1));
-      gameRef.camera.shake(amount: 0.15);
+      gameRef.camera.shake(duration: 0.15, intensity: 5);
     } else if (position.y < 0) {
       position.y = 0;
       velocity.multiply(Vector2(1, -1));
-      gameRef.camera.shake(amount: 0.15);
+      gameRef.camera.shake(duration: 0.15, intensity: 5);
     } else if (position.y > gameRef.size.y) {
       gameRef.onLose();
     } else {
       final previousRect = (position - ds) & size;
       final effectiveCollisionBounds = toRect().expandToInclude(previousRect);
       final intersects =
-          gameRef.platform.toRect().intersect(effectiveCollisionBounds);
+      gameRef.platform.toRect().intersect(effectiveCollisionBounds);
       if (!intersects.isEmpty) {
         position.y = gameRef.platform.position.y - Ball.radius;
         velocity.multiply(Vector2(1, -1));
         velocity += gameRef.platform.averageVelocity / 10;
       } else {
-        final boxes = gameRef.components.whereType<Crate>();
+        final boxes = gameRef.children.whereType<Crate>();
         var firstBox = true;
         for (final box in boxes) {
           final collision = box.toRect().intersect(effectiveCollisionBounds);
@@ -188,7 +190,7 @@ class Ball extends PositionComponent with HasGameRef<BreakoutGame> {
               velocity.multiply(Vector2(1, -1));
               firstBox = false;
             }
-            box.remove();
+            box.shouldRemove = true;
           }
         }
       }
@@ -288,14 +290,14 @@ class PlatformShadow extends PositionComponent {
   }
 }
 
-class BreakoutGame extends BaseGame with HasDraggableComponents {
+class BreakoutGame extends FlameGame with HasDraggables {
   late Platform platform;
   late Ball ball;
 
   @override
   Future<void> onLoad() async {
-    camera.shakeIntensity = 5;
-    viewport = FixedResolutionViewport(Vector2(640, 1280));
+    super.onLoad();
+    camera.viewport = FixedResolutionViewport(Vector2(640, 1280));
     setup();
   }
 
@@ -325,9 +327,9 @@ class BreakoutGame extends BaseGame with HasDraggableComponents {
   }
 
   void onLose() {
-    clear();
+    children.clear();
     setup();
-    camera.shake(amount: 2);
+    camera.shake(duration: 2, intensity: 5);
     overlays.add('gameOver');
   }
 

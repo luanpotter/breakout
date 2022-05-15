@@ -1,8 +1,18 @@
+import 'package:flame/components.dart';
 import 'package:flame/game.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Draggable;
 
 void main() {
-  runApp(GameWidget(game: MyGame()));
+  runApp(
+    GameWidget<BreakoutGame>(
+      game: BreakoutGame(),
+    ),
+  );
 }
 
-class MyGame extends BaseGame {}
+class BreakoutGame extends FlameGame with HasDraggables {
+  @override
+  Future<void> onLoad() async {
+    super.onLoad();
+  }
+}

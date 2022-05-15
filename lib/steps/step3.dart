@@ -1,7 +1,6 @@
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
-import 'package:flame/extensions.dart';
-import 'package:flame/gestures.dart';
+import 'package:flame/input.dart';
 import 'package:flame/palette.dart';
 import 'package:flutter/material.dart' hide Draggable;
 
@@ -12,7 +11,11 @@ final _paintGreen = BasicPalette.green.paint()..blendMode = BlendMode.lighten;
 final _paintBlue = BasicPalette.blue.paint()..blendMode = BlendMode.lighten;
 
 void main() {
-  runApp(GameWidget(game: BreakoutGame()));
+  runApp(
+    GameWidget<BreakoutGame>(
+      game: BreakoutGame(),
+    ),
+  );
 }
 
 class Bg extends Component with HasGameRef<BreakoutGame> {
@@ -21,7 +24,7 @@ class Bg extends Component with HasGameRef<BreakoutGame> {
   }
 
   @override
-  bool get isHud => true;
+  PositionType get positionType => PositionType.viewport;
 
   @override
   int get priority => -1;
@@ -30,7 +33,8 @@ class Bg extends Component with HasGameRef<BreakoutGame> {
 class Platform extends PositionComponent
     with HasGameRef<BreakoutGame>, Draggable {
   @override
-  Future<void>? onLoad() {
+  Future<void>? onLoad() async {
+    super.onLoad();
     anchor = Anchor.topCenter;
     x = gameRef.size.x / 2;
     y = gameRef.size.y - 100;
@@ -65,14 +69,17 @@ class Platform extends PositionComponent
   }
 }
 
-class BreakoutGame extends BaseGame with HasDraggableComponents {
+class BreakoutGame extends FlameGame with HasDraggables {
   late Platform platform;
 
   @override
   Future<void> onLoad() async {
-    camera.shakeIntensity = 5;
-    viewport = FixedResolutionViewport(Vector2(640, 1280));
+    super.onLoad();
+    camera.viewport = FixedResolutionViewport(Vector2(640, 1280));
+    setup();
+  }
 
+  void setup() {
     add(Bg());
     add(platform = Platform());
   }
